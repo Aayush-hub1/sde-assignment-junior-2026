@@ -1,39 +1,28 @@
 # Submission
 
-> Replace everything in _italics_. Be concise: bullet points are fine. We read every word.
-
 ## Candidate
-- **Name:** _
-- **Assignment chosen:** _A (Data) / B (Workflow)_
-- **Time spent (honest estimate):** _e.g. 7h_
+- **Name:** Aayush Kumar
+- **Assignment chosen:** A (Data)
+- **Time spent (honest estimate):** 4.5h
 
 ## How to run
 ```bash
-# exact commands from a clean clone: setup, run, test
-```
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 
-## Design
-_Your architecture in a few paragraphs, plus a diagram if it helps. For A: your database schema
-and why. For B: your lead state machine (ASCII or Mermaid) and how you guarantee at-most-once
-dialling._
+# Generate synthetic drops
+python assignment-a-data/tools/generate_data.py --seed 42 --scale small --out data
 
-## Decisions & assumptions
-_Every place where you made a call the spec didn't make for you, and why._
+# Ingest drops incrementally and generate the 5 reports
+python -m solution.cli ingest data/drop_1
+python -m solution.cli ingest data/drop_2
+python -m solution.cli report --out reports/
 
-| Decision | Why | Alternative considered |
-|---|---|---|
-| _ | _ | _ |
+# Run automated unit and integration tests
+python -m pytest -v
 
-## Failure modes considered
-_What can go wrong and how your solution handles it (bad input, re-runs, crashes, timeouts,
-duplicates...). Also list anything you know is **not** handled._
 
-## Testing
-_What you tested, what you didn't, and why._
-
-## Results
-_For A: timings, and anything surprising in the data. For B: your `/admin/report` summary from
-a full run, ideally one that includes a `kill -9`._
-
-## If I had another day
-_What you'd do next, in priority order._
+CSV Leads ──► Header & Schema Validator ──► HMAC-SHA256 PII Hasher ──► SQLite (leads / lead_rejections)
+                                                                
+  JSONL Events ─► IST Parser & Event Dedupe ─► SQLite (events ledger) ───────────┴──► Query-Time Linker ──► 5 Reports
